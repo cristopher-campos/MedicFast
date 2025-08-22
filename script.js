@@ -84,11 +84,40 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsList.appendChild(li);
         });
 
-        const callBtn = document.createElement('a');
-        callBtn.href = `tel:${data.number}`;
-        callBtn.className = 'btn btn-red';
+        const callBtn = document.createElement('button');
+        callBtn.className = 'btn btn-red call-btn';
         callBtn.textContent = `📞 Llamar al ${data.number}`;
+        callBtn.setAttribute('data-number', data.number);
         callButtonContainer.appendChild(callBtn);
+    }
+
+    // Nuevo manejador de eventos para los botones de llamada
+    callButtonContainer.addEventListener('click', (event) => {
+        if (event.target.classList.contains('call-btn')) {
+            const phoneNumber = event.target.getAttribute('data-number');
+            showConfirmationDialog(phoneNumber);
+        }
+    });
+
+    function showConfirmationDialog(phoneNumber) {
+        const dialog = document.createElement('div');
+        dialog.className = 'confirmation-dialog';
+        dialog.innerHTML = `
+            <h3>¿Estás seguro de que quieres llamar?</h3>
+            <p>Acuérdate que esto no es un juego.</p>
+            <button class="btn-confirm">Sí, llamar al ${phoneNumber}</button>
+            <button class="btn-cancel">Cancelar</button>
+        `;
+        document.body.appendChild(dialog);
+
+        dialog.querySelector('.btn-confirm').addEventListener('click', () => {
+            window.location.href = `tel:${phoneNumber}`;
+            document.body.removeChild(dialog);
+        });
+
+        dialog.querySelector('.btn-cancel').addEventListener('click', () => {
+            document.body.removeChild(dialog);
+        });
     }
 
     medicalBtn.addEventListener('click', () => showEmergencyInfo('medical'));
