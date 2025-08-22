@@ -1,0 +1,38 @@
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedicFast - Ayuda de Emergencia Rápida</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHn3/G4zZc7qDdgMNI9xS/S4bL3B8="
+        crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nE4g6B32W6w0jW2T2W6zK6Z9z7D9z8Z7d6z7z9z7z8z7D3D9z9z9z9z9z"
+        crossorigin=""></script>
+</head>
+<body>
+    <div class="container">
+        <h1>MedicFast – Ayuda de Emergencia Rápida</h1>
+        <button id="sos-button" class="btn btn-red">🚨 SOS</button>
+
+        <div id="map-container" style="display: none;">
+            <p id="location-message">Ubicación detectada, busca ayuda cercana.</p>
+            <div id="map"></div>
+        </div>
+
+        <div id="emergency-options" style="display: none;">
+            <button id="medical-btn" class="btn btn-green">🚑 Emergencia Médica</button>
+            <button id="fire-btn" class="btn btn-green">🔥 Incendio</button>
+            <button id="police-btn" class="btn btn-green">👮 Policía</button>
+        </div>
+
+        <div id="results-container" style="display: none;">
+            <ul id="results-list"></ul>
+            <div id="call-button-container"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
