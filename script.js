@@ -1,126 +1,115 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const sosButton = document.getElementById('sos-button');
-    const mapContainer = document.getElementById('map-container');
-    const emergencyOptions = document.getElementById('emergency-options');
-    const resultsContainer = document.getElementById('results-container');
-    const resultsList = document.getElementById('results-list');
-    const callButtonContainer = document.getElementById('call-button-container');
-    const medicalBtn = document.getElementById('medical-btn');
-    const fireBtn = document.getElementById('fire-btn');
-    const policeBtn = document.getElementById('police-btn');
+// Constantes para los elementos del DOM
+const sosBtn = document.getElementById('sos-btn');
+const mapContainer = document.getElementById('map-container');
+const locationMessage = document.getElementById('location-message');
+const infoContainer = document.getElementById('info-container');
+const optionButtons = document.querySelectorAll('.option-btn');
 
-    let map;
-    let marker;
+// Datos ficticios para los servicios de emergencia
+const emergencyData = {
+    'medical-btn': {
+        title: 'Hospitales Cercanos',
+        items: ['Hospital Central', 'Clínica San Juan', 'Centro de Salud Comunitario'],
+        callNumber: '106'
+    },
+    'fire-btn': {
+        title: 'Estaciones de Bomberos',
+        items: ['Compañía de Bomberos 1', 'Brigada de Incendios', 'Estación de Rescate Local'],
+        callNumber: '116'
+    },
+    'police-btn': {
+        title: 'Comisarías',
+        items: ['Comisaría Central', 'Puesto de Policía del Barrio', 'División de Patrullaje'],
+        callNumber: '105'
+    }
+};
 
-    const dummyData = {
-        medical: {
-            list: ['Hospital San Juan', 'Clínica Central', 'Centro de Salud N°5'],
-            number: '106'
-        },
-        fire: {
-            list: ['Estación de Bomberos Voluntarios', 'Compañía de Bomberos Lima Sur'],
-            number: '116'
-        },
-        police: {
-            list: ['Comisaría del Distrito', 'Puesto Policial Vecinal'],
-            number: '105'
-        }
-    };
+let map = null;
 
-    sosButton.addEventListener('click', () => {
-        if (navigator.geolocation) {
-            sosButton.textContent = 'Buscando ubicación...';
-            sosButton.disabled = true;
+// Función para obtener la ubicación del usuario
+function getLocation() {
+    if (navigator.geolocation) {
+        // Muestra un mensaje de espera
+        locationMessage.textContent = 'Obteniendo su ubicación...';
+        locationMessage.classList.remove('hidden');
 
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    
-                    sosButton.style.display = 'none';
-                    mapContainer.style.display = 'block';
-                    emergencyOptions.style.display = 'flex';
-                    emergencyOptions.style.flexDirection = 'column';
+        navigator.geolocation.getCurrentPosition(showPosition, showError);
+    } else {
+        locationMessage.textContent = 'La geolocalización no es compatible con este navegador.';
+        locationMessage.classList.remove('hidden');
+    }
+}
 
-                    if (!map) {
-                        map = L.map('map').setView([lat, lng], 15);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        }).addTo(map);
-                    } else {
-                        map.setView([lat, lng], 15);
-                    }
+// Función que se ejecuta si se obtiene la posición correctamente
+function showPosition(position) {
+    const lat = position.coords.latitude;
+    const lon = position.coords.longitude;
 
-                    if (marker) {
-                        map.removeLayer(marker);
-                    }
-                    marker = L.marker([lat, lng]).addTo(map)
-                        .bindPopup('Tu ubicación actual').openPopup();
+    // Muestra el contenedor del mapa
+    mapContainer.style.display = 'block';
 
-                    document.getElementById('location-message').textContent = 'Ubicación detectada, busca ayuda cercana.';
-                    
-                },
-                (error) => {
-                    sosButton.textContent = '🚨 SOS (Error de ubicación)';
-                    alert('No se pudo obtener la ubicación. Por favor, asegúrate de que la geolocalización esté activada.');
-                    console.error('Error de geolocalización:', error);
-                    sosButton.disabled = false;
-                }
-            );
-        } else {
-            alert('Tu navegador no soporta la API de geolocalización.');
-        }
-    });
+    // Inicializa el mapa solo una vez
+    if (map === null) {
+        map = L.map('map').setView([lat, lon], 15);
 
-    function showEmergencyInfo(type) {
-        resultsList.innerHTML = '';
-        callButtonContainer.innerHTML = '';
-        resultsContainer.style.display = 'block';
-
-        const data = dummyData[type];
-        data.list.forEach(item => {
-            const li = document.createElement('li');
-            li.textContent = item;
-            resultsList.appendChild(li);
-        });
-
-        const callBtn = document.createElement('button');
-        callBtn.className = 'btn btn-red call-btn';
-        callBtn.textContent = `📞 Llamar al ${data.number}`;
-        callBtn.setAttribute('data-number', data.number);
-        callButtonContainer.appendChild(callBtn);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+    } else {
+        // Si el mapa ya existe, simplemente actualiza la vista
+        map.setView([lat, lon], 15);
     }
 
-    // Nuevo manejador de eventos para los botones de llamada
-    callButtonContainer.addEventListener('click', (event) => {
-        if (event.target.classList.contains('call-btn')) {
-            const phoneNumber = event.target.getAttribute('data-number');
-            showConfirmationDialog(phoneNumber);
-        }
-    });
+    // Agrega un marcador en la ubicación del usuario
+    L.marker([lat, lon]).addTo(map)
+        .bindPopup('Tu ubicación actual.')
+        .openPopup();
 
-    function showConfirmationDialog(phoneNumber) {
-        const dialog = document.createElement('div');
-        dialog.className = 'confirmation-dialog';
-        dialog.innerHTML = `
-            <h3>¿Estás seguro de que quieres llamar?</h3>
-            <p>Acuérdate que esto no es un juego.</p>
-            <button class="btn-confirm">Sí, llamar al ${phoneNumber}</button>
-            <button class="btn-cancel">Cancelar</button>
-        `;
-        document.body.appendChild(dialog);
+    // Muestra el mensaje de éxito
+    locationMessage.textContent = 'Ubicación detectada, busca ayuda cercana.';
+}
 
-        dialog.querySelector('.btn-confirm').addEventListener('click', () => {
-            window.location.href = `tel:${phoneNumber}`;
-            document.body.removeChild(dialog);
-        });
-
-        dialog.querySelector('.btn-cancel').addEventListener('click', () => {
-            document.body.removeChild(dialog);
-        });
+// Función para manejar errores de geolocalización
+function showError(error) {
+    mapContainer.style.display = 'none'; // Oculta el mapa si hay un error
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            locationMessage.textContent = 'El usuario denegó la solicitud de geolocalización.';
+            break;
+        case error.POSITION_UNAVAILABLE:
+            locationMessage.textContent = 'Información de ubicación no disponible.';
+            break;
+        case error.TIMEOUT:
+            locationMessage.textContent = 'La solicitud para obtener la ubicación ha caducado.';
+            break;
+        case error.UNKNOWN_ERROR:
+            locationMessage.textContent = 'Ocurrió un error desconocido.';
+            break;
     }
+    locationMessage.classList.remove('hidden');
+}
 
-    medicalBtn.addEventListener('click', () => showEmergencyInfo('medical'));
-    fireBtn.addEventListener('click', () => showEmergencyInfo('fire'));
-    policeBtn.addEventListener('click', () => showEmergencyInfo('police'));
+// Función para mostrar la información de emergencia
+function showEmergencyInfo(e) {
+    const buttonClass = e.target.classList[1]; // Ejemplo: 'medical-btn'
+    const data = emergencyData[buttonClass];
+
+    if (!data) return;
+
+    infoContainer.innerHTML = `
+        <h2>${data.title}</h2>
+        <ul>
+            ${data.items.map(item => `<li>${item}</li>`).join('')}
+        </ul>
+        <a href="tel:${data.callNumber}" class="call-button">Llamar al ${data.callNumber}</a>
+    `;
+    infoContainer.style.display = 'block';
+}
+
+// Escuchador de eventos para el botón SOS
+sosBtn.addEventListener('click', getLocation);
+
+// Escuchadores de eventos para los otros botones de emergencia
+optionButtons.forEach(button => {
+    button.addEventListener('click', showEmergencyInfo);
 });
